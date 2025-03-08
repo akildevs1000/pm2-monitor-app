@@ -69,7 +69,7 @@ const sendStoppedProcesses = async () => {
                 };
                 console.log("🚀 ~ exec ~ data:", data)
                 
-                // await axios.post(SEND_MESSAGE_URL, data);
+                await axios.post(SEND_MESSAGE_URL, data);
             }
         } catch (parseError) {
             console.error("Error parsing PM2 JSON output:", parseError);
@@ -80,7 +80,7 @@ const sendStoppedProcesses = async () => {
 
 // Send stopped processes immediately and then every 15 minutes
 sendStoppedProcesses();
-setInterval(sendStoppedProcesses, 15 * 60 * 1000);
+setInterval(sendStoppedProcesses, 50 * 60 * 1000);
 
 app.listen(PORT, '139.59.69.241', () => {
     console.log(`Server is running on http://139.59.69.241:${PORT}`);
