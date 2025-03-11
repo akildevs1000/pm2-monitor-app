@@ -20,7 +20,9 @@ app.get('/pm2/stopped', (req, res) => {
 
         try {
             const processes = JSON.parse(stdout);
-            const stoppedProcesses = processes.filter(proc => proc.pm2_env.status === 'stopped');
+            const stoppedProcesses = processes.filter(
+                proc => proc.pm2_env.status === 'stopped' && !IGNORED_PROCESSES.includes(proc.name)
+            );
             res.json(stoppedProcesses.map(proc => ({ id: proc.pm_id, name: proc.name, status: proc.pm2_env.status })));
         } catch (parseError) {
             res.status(500).json({ error: "Error parsing PM2 JSON output" });
