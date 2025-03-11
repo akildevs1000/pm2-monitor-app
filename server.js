@@ -8,6 +8,8 @@ const SEND_MESSAGE_URL = "https://wa.mytime2cloud.com/send-message";
 const CLIENT_ID = "AE00027_1741180197755";
 const RECIPIENT = "923108559858";
 
+const IGNORED_PROCESSES = ['client-unused-whatsapp-client', 'client-connector'];
+
 app.use(express.json());
 
 // Endpoint to list stopped PM2 processes
@@ -42,35 +44,36 @@ app.get('/pm2/restart/:id', (req, res) => {
 const sendStoppedProcesses = async () => {
     exec('pm2 jlist', async (error, stdout, stderr) => {
         if (error || stderr) return;
-        
+
         try {
             const processes = JSON.parse(stdout);
-            const stoppedProcesses = processes.filter(proc => proc.pm2_env.status === 'stopped');
-            
-            if (stoppedProcesses.length > 0) {
-                let messageText = "Dear Admin,\n\nFollowing Processes are stopped.\n\n";
-                stoppedProcesses.forEach(proc => {
-                    messageText += `Process: id:${proc.pm_id}, name:${proc.name}\n`;
-                });
-                
-                messageText += "\nTo restart any of the stopped processes, click the link below:\n";
-                messageText += "https://server.mytime2cloud.com/pm2/restart/PROCESS_ID\n";
+            const stoppedProcesses = processes.filter(
+                proc => proc.pm2_env.status === 'stopped' && !IGNORED_PROCESSES.includes(proc.name)
+            );
 
 
-                messageText += "\nTo get list of the stopped processes, click the link below:\n";
-                messageText += "https://server.mytime2cloud.com/pm2/stopped\n";
+            let messageText = `Dear Admin,\n\nTotal ${stoppedProcesses.length} Processes are stopped.\n\n`;
+            stoppedProcesses.forEach(proc => {
+                messageText += `Process: id:${proc.pm_id}, name:${proc.name}\n`;
+            });
 
-                
-                
-                const data = {
-                    clientId: CLIENT_ID,
-                    recipient: RECIPIENT,
-                    text: messageText
-                };
-                console.log("🚀 ~ exec ~ data:", data)
-                
-                await axios.post(SEND_MESSAGE_URL, data);
-            }
+            messageText += "\nTo restart any of the stopped processes, click the link below:\n";
+            messageText += "https://server.mytime2cloud.com/pm2/restart/PROCESS_ID\n";
+
+
+            messageText += "\nTo get list of the stopped processes, click the link below:\n";
+            messageText += "https://server.mytime2cloud.com/pm2/stopped\n";
+
+
+
+            const data = {
+                clientId: CLIENT_ID,
+                recipient: RECIPIENT,
+                text: messageText
+            };
+            console.log("🚀 ~ exec ~ data:", data)
+
+            await axios.post(SEND_MESSAGE_URL, data);
         } catch (parseError) {
             console.error("Error parsing PM2 JSON output:", parseError);
         }
